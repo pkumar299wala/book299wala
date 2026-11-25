@@ -1,0 +1,303 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedEmailAdmin() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == 'galaxyscienceacademy@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedEmailAdmin()
+        || (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Validation Blueprints
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'classLevel', 'subject', 'productType', 'mrp', 'sellingPrice', 'stock', 'status'])
+        && data.keys().hasOnly([
+          'id', 'name', 'category', 'classLevel', 'subject', 'productType',
+          'mrp', 'sellingPrice', 'stock', 'pages', 'language', 'board',
+          'shortDesc', 'fullDesc', 'whatIsInside', 'rating', 'reviewCount',
+          'isBestSeller', 'isNewArrival', 'status', 'coverImage', 'coverAccent',
+          'mainFileId', 'mainFileName', 'mainFileType',
+          'sampleFileId', 'sampleFilePath', 'samplePagesText', 'createdAt', 'salesCount'
+        ])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 200
+        && data.category is string && data.category.size() <= 80
+        && data.classLevel is string && data.classLevel.size() <= 30
+        && data.subject is string && data.subject.size() <= 40
+        && data.productType in ['Digital', 'Physical']
+        && data.mrp is number && data.mrp >= 1
+        && data.sellingPrice is number && data.sellingPrice >= 1
+        && data.stock is number && data.stock >= 0
+        && data.status in ['Published', 'Draft', 'Hidden']
+        && (!('shortDesc' in data) || (data.shortDesc is string && data.shortDesc.size() <= 400))
+        && (!('fullDesc' in data) || (data.fullDesc is string && data.fullDesc.size() <= 4000))
+        && (!('whatIsInside' in data) || (data.whatIsInside is list && data.whatIsInside.size() <= 30 && (data.whatIsInside.size() == 0 || data.whatIsInside[0] is string)))
+        && (!('samplePagesText' in data) || (data.samplePagesText is list && data.samplePagesText.size() <= 5 && (data.samplePagesText.size() == 0 || data.samplePagesText[0] is string)));
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'userId', 'customerName', 'mobile', 'classLevel', 'items', 'grandTotal', 'paymentMethod', 'status', 'createdAt'])
+        && data.keys().hasOnly([
+          'id', 'userId', 'customerName', 'mobile', 'whatsapp', 'email',
+          'classLevel', 'address', 'city', 'pincode', 'items', 'subtotal',
+          'couponCode', 'discountAmount', 'comboDiscount', 'deliveryCharge',
+          'grandTotal', 'paymentMethod', 'paymentScreenshot', 'paymentStatus',
+          'status', 'createdAt'
+        ])
+        && data.id is string && data.id.size() >= 2 && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.customerName is string && data.customerName.size() >= 2 && data.customerName.size() <= 120
+        && data.mobile is string && data.mobile.size() >= 10 && data.mobile.size() <= 20
+        && data.classLevel is string && data.classLevel.size() <= 30
+        && data.items is list && data.items.size() >= 1 && data.items.size() <= 50
+        && data.grandTotal is number && data.grandTotal >= 0
+        && data.paymentMethod in ['UPI', 'PhonePe / GPay / Paytm', 'Cash On Delivery']
+        && data.status in ['Pending', 'Confirmed', 'Delivered', 'Cancelled']
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && (!('address' in data) || (data.address is string && data.address.size() <= 500))
+        && (!('paymentScreenshot' in data) || (data.paymentScreenshot is string && data.paymentScreenshot.size() <= 2000));
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['id', 'name', 'mobile', 'classLevel', 'isBlocked'])
+        && data.keys().hasOnly([
+          'id', 'name', 'mobile', 'whatsapp', 'email', 'classLevel',
+          'address', 'totalOrders', 'totalSpent', 'lastOrderDate', 'isBlocked'
+        ])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() <= 120
+        && data.mobile is string && data.mobile.size() <= 20
+        && data.classLevel is string && data.classLevel.size() <= 30
+        && data.isBlocked is bool
+        && (!('address' in data) || (data.address is string && data.address.size() <= 500));
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['websiteName', 'upiId', 'whatsapp', 'adminEmail'])
+        && data.keys().hasOnly([
+          'websiteName', 'tagline', 'logoUrl', 'owner', 'ownerName',
+          'mobile', 'whatsapp', 'upiId', 'adminEmail',
+          'digitalDeliveryCharge', 'physicalDeliveryCharge', 'freeDeliveryAbove',
+          'codEnabled', 'watermarkEnabled', 'maxDownloadLimit',
+          'aboutText', 'contactAddress', 'refundPolicyText', 'privacyPolicyText', 'termsText'
+        ])
+        && data.websiteName is string && data.websiteName.size() <= 120
+        && data.upiId is string && data.upiId.size() <= 80
+        && data.whatsapp is string && data.whatsapp.size() <= 20
+        && data.adminEmail is string && data.adminEmail.size() <= 160;
+    }
+
+    function isValidCoupon(data) {
+      return data.keys().hasAll(['id', 'code', 'type', 'value', 'expiryDate', 'active'])
+        && data.keys().hasOnly(['id', 'code', 'type', 'value', 'minOrder', 'expiryDate', 'active'])
+        && isValidId(data.id)
+        && data.code is string && data.code.size() <= 40
+        && data.type in ['percent', 'flat']
+        && data.value is number && data.value >= 1
+        && data.active is bool;
+    }
+
+    function isValidOffer(data) {
+      return data.keys().hasAll(['id', 'title', 'discountPercent', 'startDate', 'endDate', 'active'])
+        && data.keys().hasOnly(['id', 'title', 'discountPercent', 'startDate', 'endDate', 'targetClass', 'active'])
+        && isValidId(data.id)
+        && data.title is string && data.title.size() <= 140
+        && data.discountPercent is number && data.discountPercent >= 0 && data.discountPercent <= 95
+        && data.active is bool;
+    }
+
+    function isValidFile(data) {
+      return data.keys().hasAll(['id', 'name', 'storagePath', 'sizeBytes', 'mimeType', 'kind', 'uploadedAt'])
+        && data.keys().hasOnly(['id', 'name', 'storagePath', 'sizeBytes', 'mimeType', 'kind', 'productId', 'productName', 'uploadedAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() <= 255
+        && data.storagePath is string && data.storagePath.size() <= 500
+        && data.sizeBytes is number && data.sizeBytes >= 0
+        && data.kind in ['main', 'sample', 'cover', 'screenshot', 'logo'];
+    }
+
+    function isValidActivityLog(data) {
+      return data.keys().hasAll(['id', 'adminUid', 'adminEmail', 'action', 'target', 'details', 'createdAt'])
+        && data.keys().hasOnly(['id', 'adminUid', 'adminEmail', 'action', 'target', 'details', 'createdAt'])
+        && isValidId(data.id)
+        && data.adminUid == request.auth.uid
+        && data.adminEmail is string && data.adminEmail.size() <= 160
+        && data.action is string && data.action.size() <= 80
+        && data.target is string && data.target.size() <= 200
+        && data.details is string && data.details.size() <= 500
+        && data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    function isValidEmailLog(data) {
+      return data.keys().hasAll(['id', 'to', 'subject', 'body', 'type', 'sentAt', 'status'])
+        && data.keys().hasOnly(['id', 'to', 'subject', 'body', 'type', 'sentAt', 'status'])
+        && isValidId(data.id)
+        && data.to is string && data.to.size() <= 160
+        && data.subject is string && data.subject.size() <= 250
+        && data.body is string && data.body.size() <= 3000
+        && data.status in ['Sent', 'Queued'];
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll(['id', 'name', 'mobile', 'message', 'createdAt'])
+        && data.keys().hasOnly(['id', 'name', 'mobile', 'email', 'message', 'createdAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() <= 120
+        && data.mobile is string && data.mobile.size() <= 20
+        && data.message is string && data.message.size() <= 2000;
+    }
+
+    // Connection check path (single-doc get only)
+    match /test/connection {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // Products: Public read, Admin-only write (no console price tampering)
+    match /products/{productId} {
+      allow get: if isValidId(productId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isAdmin() && isValidId(productId);
+    }
+
+    // Orders: Customers create their own orders and read only their own; Admin reads/updates all
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isVerifiedEmailAdmin());
+      allow create: if isSignedIn()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().status in ['Pending', 'Confirmed'];
+      allow update: if isValidId(orderId) && isValidOrder(incoming()) && (
+        isAdmin() ||
+        (
+          isSignedIn()
+          && existing().userId == request.auth.uid
+          && incoming().userId == existing().userId
+          && incoming().grandTotal == existing().grandTotal
+          && incoming().status == existing().status
+          && incoming().paymentStatus == existing().paymentStatus
+          && incoming().items.size() == existing().items.size()
+          && incoming().items[0].productId == existing().items[0].productId
+          && incoming().items[0].price == existing().items[0].price
+          && incoming().diff(existing()).affectedKeys().hasOnly(['items'])
+        )
+      );
+      allow delete: if isAdmin() && isValidId(orderId);
+    }
+
+    // Customers (PII isolated per owner or Admin)
+    match /customers/{customerId} {
+      allow get: if isValidId(customerId) && isSignedIn() && (customerId == request.auth.uid || isAdmin());
+      allow list: if isVerifiedEmailAdmin();
+      allow create: if isSignedIn()
+        && isValidId(customerId)
+        && isValidCustomer(incoming())
+        && (isAdmin() || (customerId == request.auth.uid && incoming().isBlocked == false));
+      allow update: if isValidId(customerId) && isValidCustomer(incoming()) && (
+        isAdmin() ||
+        (
+          isSignedIn()
+          && customerId == request.auth.uid
+          && existing().isBlocked == false
+          && incoming().isBlocked == existing().isBlocked
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'mobile', 'whatsapp', 'email', 'classLevel', 'address', 'totalOrders', 'totalSpent', 'lastOrderDate'])
+        )
+      );
+      allow delete: if isAdmin() && isValidId(customerId);
+    }
+
+    // Settings (UPI ID, WhatsApp, Delivery Rates, Policies): Public read, Admin-only write
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(settingId) && isValidSettings(incoming());
+      allow delete: if false;
+    }
+
+    // Coupons & Offers: Public read, Admin-only write
+    match /coupons/{couponId} {
+      allow get: if isValidId(couponId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(couponId) && isValidCoupon(incoming());
+      allow delete: if isAdmin() && isValidId(couponId);
+    }
+
+    match /offers/{offerId} {
+      allow get: if isValidId(offerId);
+      allow list: if true;
+      allow create, update: if isAdmin() && isValidId(offerId) && isValidOffer(incoming());
+      allow delete: if isAdmin() && isValidId(offerId);
+    }
+
+    // Uploaded Files Metadata (Storage paths hidden from unauthenticated users)
+    match /files/{fileId} {
+      allow get: if isValidId(fileId) && isSignedIn();
+      allow list: if isVerifiedEmailAdmin();
+      allow create, update: if isAdmin() && isValidId(fileId) && isValidFile(incoming());
+      allow delete: if isAdmin() && isValidId(fileId);
+    }
+
+    // Immutable Admin Activity Log
+    match /activityLogs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isVerifiedEmailAdmin();
+      allow create: if isAdmin() && isValidId(logId) && isValidActivityLog(incoming());
+      allow update, delete: if false;
+    }
+
+    // Email Notification Logs
+    match /emailLogs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isVerifiedEmailAdmin();
+      allow create: if isSignedIn() && isValidId(logId) && isValidEmailLog(incoming());
+      allow update, delete: if isAdmin() && isValidId(logId);
+    }
+
+    // Contact Form Messages
+    match /contacts/{contactId} {
+      allow get: if isValidId(contactId) && isAdmin();
+      allow list: if isVerifiedEmailAdmin();
+      allow create: if isValidId(contactId) && isValidContact(incoming());
+      allow update, delete: if isAdmin() && isValidId(contactId);
+    }
+
+    // Admins Marker Collection
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isVerifiedEmailAdmin();
+      allow create, update: if isVerifiedEmailAdmin() && isValidId(adminId) && request.auth.uid == adminId;
+      allow delete: if false;
+    }
+  }
+}

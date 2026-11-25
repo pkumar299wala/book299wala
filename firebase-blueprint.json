@@ -1,0 +1,267 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Educational study material (Digital PDF/Course or Physical Book/Kit) sold on Book.299wala.com",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "category": { "type": "string", "maxLength": 80 },
+        "classLevel": { "type": "string", "maxLength": 30 },
+        "subject": { "type": "string", "maxLength": 40 },
+        "productType": { "type": "string", "enum": ["Digital", "Physical"] },
+        "mrp": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "pages": { "type": "number" },
+        "language": { "type": "string", "maxLength": 80 },
+        "board": { "type": "string", "maxLength": 80 },
+        "shortDesc": { "type": "string", "maxLength": 400 },
+        "fullDesc": { "type": "string", "maxLength": 4000 },
+        "whatIsInside": { "type": "array" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "isBestSeller": { "type": "boolean" },
+        "isNewArrival": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["Published", "Draft", "Hidden"] },
+        "coverImage": { "type": "string", "maxLength": 2000 },
+        "coverAccent": { "type": "string", "maxLength": 20 },
+        "mainFileId": { "type": "string", "maxLength": 128 },
+        "mainFileName": { "type": "string", "maxLength": 255 },
+        "mainFilePath": { "type": "string", "maxLength": 500 },
+        "mainFileType": { "type": "string", "maxLength": 120 },
+        "sampleFileId": { "type": "string", "maxLength": 128 },
+        "sampleFilePath": { "type": "string", "maxLength": 500 },
+        "samplePagesText": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time", "maxLength": 64 },
+        "salesCount": { "type": "number" }
+      },
+      "required": ["id", "name", "category", "classLevel", "subject", "productType", "mrp", "sellingPrice", "stock", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order with line items, payment verification, and download counters",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-#]+$" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "mobile": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "whatsapp": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 160 },
+        "classLevel": { "type": "string", "maxLength": 30 },
+        "address": { "type": "string", "maxLength": 500 },
+        "city": { "type": "string", "maxLength": 100 },
+        "pincode": { "type": "string", "maxLength": 12 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 40 },
+        "discountAmount": { "type": "number" },
+        "comboDiscount": { "type": "number" },
+        "deliveryCharge": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["UPI", "PhonePe / GPay / Paytm", "Cash On Delivery"] },
+        "paymentScreenshot": { "type": "string", "maxLength": 2000 },
+        "paymentStatus": { "type": "string", "maxLength": 60 },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Delivered", "Cancelled"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "customerName", "mobile", "classLevel", "items", "grandTotal", "paymentMethod", "status", "createdAt"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer profile tied to Firebase Auth UID",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "mobile": { "type": "string", "maxLength": 20 },
+        "whatsapp": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 160 },
+        "classLevel": { "type": "string", "maxLength": 30 },
+        "address": { "type": "string", "maxLength": 500 },
+        "totalOrders": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "lastOrderDate": { "type": "string", "maxLength": 64 },
+        "isBlocked": { "type": "boolean" }
+      },
+      "required": ["id", "name", "mobile", "classLevel", "isBlocked"]
+    },
+    "PublicSettings": {
+      "title": "PublicSettings",
+      "description": "Public storefront configuration (UPI ID, WhatsApp, delivery rates, policies) writable only by Admin",
+      "type": "object",
+      "properties": {
+        "websiteName": { "type": "string", "maxLength": 120 },
+        "tagline": { "type": "string", "maxLength": 200 },
+        "logoUrl": { "type": "string", "maxLength": 2000 },
+        "owner": { "type": "string", "maxLength": 160 },
+        "ownerName": { "type": "string", "maxLength": 120 },
+        "mobile": { "type": "string", "maxLength": 20 },
+        "whatsapp": { "type": "string", "maxLength": 20 },
+        "upiId": { "type": "string", "maxLength": 80 },
+        "adminEmail": { "type": "string", "maxLength": 160 },
+        "digitalDeliveryCharge": { "type": "number" },
+        "physicalDeliveryCharge": { "type": "number" },
+        "freeDeliveryAbove": { "type": "number" },
+        "codEnabled": { "type": "boolean" },
+        "watermarkEnabled": { "type": "boolean" },
+        "maxDownloadLimit": { "type": "number" },
+        "aboutText": { "type": "string", "maxLength": 4000 },
+        "contactAddress": { "type": "string", "maxLength": 400 },
+        "refundPolicyText": { "type": "string", "maxLength": 4000 },
+        "privacyPolicyText": { "type": "string", "maxLength": 4000 },
+        "termsText": { "type": "string", "maxLength": 4000 }
+      },
+      "required": ["websiteName", "upiId", "whatsapp", "adminEmail"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon codes managed by Admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 40 },
+        "type": { "type": "string", "enum": ["percent", "flat"] },
+        "value": { "type": "number" },
+        "minOrder": { "type": "number" },
+        "expiryDate": { "type": "string", "maxLength": 32 },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "code", "type", "value", "expiryDate", "active"]
+    },
+    "FestivalOffer": {
+      "title": "FestivalOffer",
+      "description": "Scheduled festival offer managed by Admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 140 },
+        "discountPercent": { "type": "number" },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "endDate": { "type": "string", "maxLength": 32 },
+        "targetClass": { "type": "string", "maxLength": 30 },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "title", "discountPercent", "startDate", "endDate", "active"]
+    },
+    "UploadedFile": {
+      "title": "UploadedFile",
+      "description": "Metadata for files stored in Firebase Storage with randomized paths",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 255 },
+        "storagePath": { "type": "string", "maxLength": 500 },
+        "sizeBytes": { "type": "number" },
+        "mimeType": { "type": "string", "maxLength": 120 },
+        "kind": { "type": "string", "enum": ["main", "sample", "cover", "screenshot", "logo"] },
+        "productId": { "type": "string", "maxLength": 128 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "uploadedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "storagePath", "sizeBytes", "mimeType", "kind", "uploadedAt"]
+    },
+    "AdminActivityLog": {
+      "title": "AdminActivityLog",
+      "description": "Immutable audit log of Admin actions (Product Add, Price Change, Delete, Settings)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "adminUid": { "type": "string", "maxLength": 128 },
+        "adminEmail": { "type": "string", "maxLength": 160 },
+        "action": { "type": "string", "maxLength": 80 },
+        "target": { "type": "string", "maxLength": 200 },
+        "details": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "adminUid", "adminEmail", "action", "target", "details", "createdAt"]
+    },
+    "EmailLog": {
+      "title": "EmailLog",
+      "description": "Admin and customer notification log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "to": { "type": "string", "maxLength": 160 },
+        "subject": { "type": "string", "maxLength": 250 },
+        "body": { "type": "string", "maxLength": 3000 },
+        "type": { "type": "string", "maxLength": 40 },
+        "sentAt": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Sent", "Queued"] }
+      },
+      "required": ["id", "to", "subject", "body", "type", "sentAt", "status"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Customer inquiry submitted via Contact Us form",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 120 },
+        "mobile": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 160 },
+        "message": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "mobile", "message", "createdAt"]
+    },
+    "AdminMarker": {
+      "title": "AdminMarker",
+      "description": "Trusted Admin UID document created by Admin verification",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 160 }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Catalog of study materials; public read, admin-only write"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders; owner-only read/create, admin full access"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Customer profiles containing PII; owner or admin read/write only"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/PublicSettings" },
+      "description": "Storefront configuration (UPI ID, WhatsApp, policies); public read, admin-only write"
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "#/entities/Coupon" },
+      "description": "Discount coupons; public read, admin-only write"
+    },
+    "/offers/{offerId}": {
+      "schema": { "$ref": "#/entities/FestivalOffer" },
+      "description": "Festival offers; public read, admin-only write"
+    },
+    "/files/{fileId}": {
+      "schema": { "$ref": "#/entities/UploadedFile" },
+      "description": "Uploaded file registry; authenticated users can read metadata for owned downloads, admin-only write"
+    },
+    "/activityLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AdminActivityLog" },
+      "description": "Immutable admin audit log; admin read and create only"
+    },
+    "/emailLogs/{logId}": {
+      "schema": { "$ref": "#/entities/EmailLog" },
+      "description": "Email alert logs; signed-in create on order/contact, admin read"
+    },
+    "/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/ContactMessage" },
+      "description": "Contact form submissions; anyone can create, admin-only read/delete"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminMarker" },
+      "description": "Admin role marker docs"
+    }
+  }
+}

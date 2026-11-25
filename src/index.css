@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Book.299wala.com Global Typography & Design Tokens */
+@layer base {
+  :root {
+    --brand-navy: #0B2C6F;
+    --brand-orange: #FF6B00;
+    --brand-green: #16A34A;
+    --canvas-bg: #F3F4F6;
+  }
+
+  body {
+    font-family: 'Hind', sans-serif;
+    background-color: #F3F4F6;
+    color: #0F172A;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Poppins', 'Hind', sans-serif;
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth focus visibility for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #FF6B00;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbars nicely on horizontal category ribbons */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

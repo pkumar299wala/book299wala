@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Book.299wala.com
+// 1. Only Admin (Galaxyscienceacademy@gmail.com) can upload/delete product files, covers, samples, logos
+// 2. Protected study PDFs/files cannot be accessed via public direct links without authentication
+// 3. Customers can upload their own UPI payment screenshots
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'Galaxyscienceacademy@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    // Protected Digital Products (PDF, Word, Excel, PPT, ZIP)
+    // Direct unauthenticated URLs are blocked; signed-in buyers download via app order verification
+    match /protected_files/{fileName} {
+      allow read: if isSignedIn();
+      allow write, delete: if isAdmin() && request.resource.size <= 100 * 1024 * 1024;
+    }
+
+    // Public cover photos, 3-page view-only samples, and store logo
+    match /covers/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin() && request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    match /samples/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin() && request.resource.size <= 20 * 1024 * 1024;
+    }
+
+    match /branding/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin() && request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    // Customer payment screenshots (isolated per authenticated user UID)
+    match /screenshots/{userId}/{fileName} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isSignedIn() && request.auth.uid == userId && request.resource.size <= 10 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+  }
+}
