@@ -525,12 +525,12 @@ status: 'Pending', // Jab tak Admin Confirm na kare, Pending hi rahega
 
     // Email Notification 2: To Customer (if email provided)
     if (payload.email) {
-      await logEmail({
-        to: payload.email,
-        subject: `Order Confirmed #${orderId} - Download Link - ${settings.websiteName}`,
-        body: `Namaste ${payload.customerName},\nAapka order #${orderId} (₹${pricing.grandTotal}) confirm ho gaya hai.\nMy Account me apne verified mobile number ${payload.mobile} se login karke PDF download karein.\nSupport WhatsApp: ${settings.whatsapp}`,
-        type: 'customer_confirm',
-      });
+   await logEmail({
+  to: payload.email,
+  subject: `Order Received #${orderId} - Payment Verification Pending - ${settings.websiteName}`,
+  body: `Namaste ${payload.customerName},\nAapka order #${orderId} (₹${pricing.grandTotal}) mil gaya hai.\nPayment Verify hote hi Download khul jayega. Thoda wait karein.\nSupport WhatsApp: ${settings.whatsapp}`,
+  type: 'customer_confirm',
+});
     }
 
     setCart([]);
