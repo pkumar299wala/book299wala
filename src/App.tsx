@@ -467,13 +467,11 @@ function StoreApp() {
       grandTotal: pricing.grandTotal,
       paymentMethod: payload.paymentMethod,
       ...(payload.paymentScreenshot ? { paymentScreenshot: payload.paymentScreenshot } : {}),
-      paymentStatus:
-        payload.paymentMethod === 'Cash On Delivery'
-          ? 'COD'
-          : payload.paymentScreenshot
-            ? 'Paid / Screenshot Uploaded'
-            : 'Pending Verification',
-      status: 'Confirmed',
+     paymentStatus:
+  payload.paymentMethod === 'Cash On Delivery'
+    ? 'COD - Pending'
+    : 'Pending Verification',
+status: 'Pending', // Jab tak Admin Confirm na kare, Pending hi rahega
       createdAt: nowIso,
     });
 
