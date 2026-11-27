@@ -40,6 +40,11 @@ export const OrderSuccessPage: React.FC<OrderSuccessProps> = ({
   const handleDownload = async (productId: string) => {
     const item = order.items.find((i) => i.productId === productId);
     if (!item) return;
+    // FINAL FIX: Pending me Download BLOCK
+    if (order.status !== 'Confirmed') {
+      setDownloadMsg('⏳ Payment Verify Ho Raha Hai... Admin ke Confirm karte hi Download khul jayega. Thoda wait karein.');
+      return;
+    }
     if (item.downloadCount >= settings.maxDownloadLimit) {
       setDownloadMsg(
         `Is order par maximum ${settings.maxDownloadLimit} downloads poore ho chuke hain. Support ke liye WhatsApp ${settings.whatsapp} par message karein.`
@@ -84,12 +89,17 @@ export const OrderSuccessPage: React.FC<OrderSuccessProps> = ({
             <CheckCircle2 className="h-10 w-10" />
           </div>
           <h1 className="mt-4 font-display text-2xl sm:text-3xl font-extrabold text-[#16A34A]">
-            Order Confirm Ho Gaya!
+            {order.status === 'Confirmed' ? 'Order Confirm Ho Gaya!' : 'Order Mil Gaya! Payment Verify Ho Raha Hai...'}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             Dhanyawad <strong>{order.customerName}</strong>! Aapka Order ID hai{' '}
             <span className="font-mono-num font-bold text-[#0B2C6F]">#{order.id}</span>
           </p>
+          {order.status !== 'Confirmed' && (
+            <p className="mt-2 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs font-bold text-yellow-800">
+              ⏳ Aapka Payment Verify Ho Raha Hai. Admin ke Confirm karte hi Download Button khul jayega.
+            </p>
+          )}
         </div>
 
         {hasPhysical && (
@@ -129,15 +139,21 @@ export const OrderSuccessPage: React.FC<OrderSuccessProps> = ({
                         </span>
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      disabled={remaining === 0 || downloadingId === item.productId}
-                      onClick={() => handleDownload(item.productId)}
-                      className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-[#16A34A] px-4 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 cursor-pointer whitespace-nowrap"
-                    >
-                      <Download className="h-4 w-4" />
-                      {downloadingId === item.productId ? 'Preparing PDF...' : 'Download Now'}
-                    </button>
+                    {order.status === 'Confirmed' ? (
+                      <button
+                        type="button"
+                        disabled={remaining === 0 || downloadingId === item.productId}
+                        onClick={() => handleDownload(item.productId)}
+                        className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-[#16A34A] px-4 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                      >
+                        <Download className="h-4 w-4" />
+                        {downloadingId === item.productId ? 'Preparing PDF...' : 'Download Now'}
+                      </button>
+                    ) : (
+                      <div className="inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-lg bg-yellow-50 border border-yellow-200 px-4 text-xs font-bold text-yellow-800">
+                        ⏳ Payment Verify Ho Raha Hai...
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -214,6 +230,11 @@ export const MyAccountPage: React.FC<MyAccountPageProps> = ({
   const handleReDownload = async (order: Order, productId: string) => {
     const item = order.items.find((i) => i.productId === productId);
     if (!item) return;
+    // FINAL FIX: Pending me Re-Download BLOCK
+    if (order.status !== 'Confirmed') {
+      setDlMessage('⏳ Is Order ka Payment abhi Verify Ho Raha Hai. Confirm hote hi Download khulega.');
+      return;
+    }
     if (item.downloadCount >= settings.maxDownloadLimit) {
       setDlMessage(
         `Order #${order.id} par max ${settings.maxDownloadLimit} downloads limit poori ho chuki hai.`
@@ -360,8 +381,7 @@ export const MyAccountPage: React.FC<MyAccountPageProps> = ({
                 >
                   <div>
                     <p className="text-xs text-slate-500">
-                      Order <span className="font-mono-num font-semibold">#{order.id}</span> ·
-                      Remaining:{' '}
+                      Order <span className="font-mono-num font-semibold">#{order.id}</span> · Status: <span className="font-bold">{order.status}</span> · Remaining:{' '}
                       <span className="font-mono-num font-bold text-[#0B2C6F]">
                         {left}/{settings.maxDownloadLimit}
                       </span>
@@ -370,15 +390,21 @@ export const MyAccountPage: React.FC<MyAccountPageProps> = ({
                       {item.productName}
                     </h3>
                   </div>
-                  <button
-                    type="button"
-                    disabled={left === 0}
-                    onClick={() => handleReDownload(order, item.productId)}
-                    className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-[#16A34A] px-4 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-40 cursor-pointer whitespace-nowrap"
-                  >
-                    <Download className="h-4 w-4" />
-                    Re-Download
-                  </button>
+                  {order.status === 'Confirmed' ? (
+                    <button
+                      type="button"
+                      disabled={left === 0}
+                      onClick={() => handleReDownload(order, item.productId)}
+                      className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-[#16A34A] px-4 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                    >
+                      <Download className="h-4 w-4" />
+                      Re-Download
+                    </button>
+                  ) : (
+                    <div className="inline-flex min-h-[42px] items-center rounded-lg bg-yellow-50 border border-yellow-200 px-4 text-xs font-bold text-yellow-800">
+                      ⏳ Verify Ho Raha Hai...
+                    </div>
+                  )}
                 </div>
               );
             })
