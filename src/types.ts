@@ -112,7 +112,7 @@ export interface Order {
   grandTotal: number;
   paymentMethod: PaymentMethod;
   paymentScreenshot?: string;
-  paymentStatus: 'Paid / Screenshot Uploaded' | 'Pending Verification' | 'COD';
+  paymentStatus: 'Paid / Screenshot Uploaded' | 'Pending Verification' | 'COD' | 'COD - Pending';
   status: OrderStatus;
   createdAt: string;
 }
